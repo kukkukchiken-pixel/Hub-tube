@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HubTube - Share Your Videos</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f0f0f;
+            color: #fff;
+        }
+        
+        /* Header */
+        .header {
+            background: #212121;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        }
+        
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: #ff0000;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .search-container {
+            flex: 1;
+            max-width: 600px;
+            display: flex;
+            gap: 0;
+        }
+        
+        .search-input {
+            flex: 1;
+            padding: 10px 16px;
+            background: #121212;
+            border: 1px solid #303030;
+            border-radius: 40px 0 0 40px;
+            color: #fff;
+            font-size: 16px;
+            outline: none;
+        }
+        
+        .search-input:focus {
+            border-color: #1c62b9;
+        }
+        
+        .search-btn {
+            padding: 10px 24px;
+            background: #303030;
+            border: 1px solid #303030;
+            border-radius: 0 40px 40px 0;
+            color: #fff;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        .search-btn:hover {
+            background: #3f3f3f;
+        }
+        
+        .upload-btn {
+            padding: 10px 20px;
+            background: #ff0000;
+            border: none;
+            border-radius: 20px;
+            color: #fff;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .upload-btn:hover {
+            background: #cc0000;
+        }
+        
+        /* Tabs */
+        .tabs {
+            background: #212121;
+            padding: 12px 20px;
+            display: flex;
+            gap: 15px;
+            overflow-x: auto;
+            border-bottom: 1px solid #303030;
+        }
+        
+        .tab {
+            padding: 8px 16px;
+            background: #3f3f3f;
+            border: none;
+            border-radius: 20px;
+            color: #fff;
+            cursor: pointer;
+            white-space: nowrap;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        .tab:hover {
+            background: #505050;
+        }
+        
+        .tab.active {
+            background: #fff;
+            color: #000;
+        }
+        
+        /* Main Content */
+        .container {
+            padding: 20px;
+            max-width: 1920px;
+            margin: 0 auto;
+        }
+        
+        .section-title {
+            font-size: 20px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+        
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        
+        .video-card {
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .video-card:hover {
+            transform: scale(1.02);
+        }
+        
+        .video-thumbnail {
+            width: 100%;
+            aspect-ratio: 16/9;
+            background: #303030;
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .video-thumbnail img,
+        .video-thumbnail video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .video-duration {
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+            background: rgba(0,0,0,0.8);
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .play-icon {
+            position: absolute;
+            font-size: 48px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .video-card:hover .play-icon {
+            opacity: 0.9;
+        }
+        
+        .video-info {
+            padding: 12px 0;
+        }
+        
+        .video-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .video-meta {
+            font-size: 14px;
+            color: #aaa;
+        }
+        
+        .video-stats {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        
+        /* Upload Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal.show {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: #282828;
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .modal-title {
+            font-size: 24px;
+            font-weight: 600;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 28px;
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+        }
+        
+        .upload-area {
+            border: 2px dashed #606060;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .upload-area:hover {
+            border-color: #fff;
+            background: #303030;
+        }
+        
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            background: #121212;
+            border: 1px solid #303030;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 14px;
+            font-family: inherit;
+        }
+        
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #1c62b9;
+        }
+        
+        .submit-btn {
+            width: 100%;
+            padding: 12px;
+            background: #ff0000;
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        
+        .submit-btn:hover {
+            background: #cc0000;
+        }
+        
+        .submit-btn:disabled {
+            background: #606060;
+            cursor: not-allowed;
+        }
+        
+        /* Video Player Modal */
+        .player-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 2000;
+        }
+        
+        .player-modal.show {
+            display: block;
+        }
+        
+        .player-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .player-header {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 10px;
+        }
+        
+        .player-video-container {
+            flex: 1;
+            background: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        
+        .player-video-container video,
+        .player-video-container img {
+            max-width: 100%;
+            max-height: 100%;
+        }
+        
+        .player-info {
+            background: #212121;
+            padding: 20px;
+            border-radius: 12px;
+        }
+        
+        .player-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .player-stats {
+            display: flex;
+            gap: 20px;
+            color: #aaa;
+            font-size: 14px;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #aaa;
+        }
+        
+        .empty-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .video-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .search-container {
+                max-width: none;
+            }
+        }
+        
+        .preview-container {
+            margin-top: 15px;
+            display: none;
+        }
+        
+        .preview-container.show {
+            display: block;
+        }
+        
+        .preview-thumbnail {
+            width: 100%;
+            max-height: 300px;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="logo" onclick="loadHome()">
+            🎥 <span id="siteName">HubTube</span>
+        </div>
+        
+        <div class="search-container">
+            <input type="text" class="search-input" id="searchInput" placeholder="Search videos..." onkeypress="handleSearchKeypress(event)">
+            <button class="search-btn" onclick="searchVideos()">🔍</button>
+        </div>
+        
+        <button class="upload-btn" onclick="openUploadModal()">
+            ➕ Upload
+        </button>
+    </div>
+    
+    <!-- Tabs -->
+    <div class="tabs">
+        <button class="tab active" onclick="filterVideos('all')">All</button>
+        <button class="tab" onclick="filterVideos('random')">Random Videos</button>
+        <button class="tab" onclick="filterVideos('latest')">Latest Videos</button>
+        <button class="tab" onclick="filterVideos('oldest')">Oldest Videos</button>
+        <button class="tab" onclick="filterVideos('popular')">Most Viewed</button>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="container">
+        <h2 class="section-title" id="sectionTitle">All Videos</h2>
+        <div class="video-grid" id="videoGrid">
+            <div class="empty-state">
+                <div class="empty-icon">📹</div>
+                <h3>No videos yet</h3>
+                <p>Upload your first video to get started!</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Upload Modal -->
+    <div class="modal" id="uploadModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Upload Video/Photo</h2>
+                <button class="close-btn" onclick="closeUploadModal()">×</button>
+            </div>
+            
+            <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+                <div class="upload-icon">📤</div>
+                <h3>Click to select file</h3>
+                <p>Support: Video (MP4, WebM) or Images (JPG, PNG, GIF)</p>
+            </div>
+            
+            <input type="file" id="fileInput" accept="video/*,image/*" style="display: none;" onchange="handleFileSelect(event)">
+            
+            <div class="preview-container" id="previewContainer">
+                <video id="videoPreview" class="preview-thumbnail" controls style="display: none;"></video>
+                <img id="imagePreview" class="preview-thumbnail" style="display: none;">
+            </div>
+            
+            <div class="form-group">
+                <label>Title</label>
+                <input type="text" id="videoTitle" placeholder="Enter video title">
+            </div>
+            
+            <div class="form-group">
+                <label>Description</label>
+                <textarea id="videoDescription" placeholder="Tell viewers about your video"></textarea>
+            </div>
+            
+            <button class="submit-btn" id="uploadSubmitBtn" onclick="uploadVideo()" disabled>
+                Upload Video
+            </button>
+        </div>
+    </div>
+    
+    <!-- Player Modal -->
+    <div class="player-modal" id="playerModal">
+        <div class="player-content">
+            <div class="player-header">
+                <button class="close-btn" onclick="closePlayer()">×</button>
+            </div>
+            
+            <div class="player-video-container" id="playerContainer">
+            </div>
+            
+            <div class="player-info">
+                <h1 class="player-title" id="playerTitle"></h1>
+                <div class="player-stats">
+                    <span id="playerViews">👁️ 0 views</span>
+                    <span id="playerDate">📅 Just now</span>
+                </div>
+                <p id="playerDescription" style="margin-top: 15px; color: #aaa;"></p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let videos = [];
+        let currentFilter = 'all';
+        let selectedFile = null;
+        
+        // Load videos from storage
+        function loadVideos() {
+            const stored = localStorage.getItem('hubtube_videos');
+            if (stored) {
+                videos = JSON.parse(stored);
+            }
+            renderVideos();
+        }
+        
+        // Save videos to storage
+        function saveVideos() {
+            localStorage.setItem('hubtube_videos', JSON.stringify(videos));
+        }
+        
+        // Render videos
+        function renderVideos() {
+            const grid = document.getElementById('videoGrid');
+            let filteredVideos = [...videos];
+            
+            // Apply filters
+            if (currentFilter === 'random') {
+                filteredVideos = shuffleArray(filteredVideos);
+                document.getElementById('sectionTitle').textContent = 'Random Videos';
+            } else if (currentFilter === 'latest') {
+                filteredVideos.sort((a, b) => b.timestamp - a.timestamp);
+                document.getElementById('sectionTitle').textContent = 'Latest Videos';
+            } else if (currentFilter === 'oldest') {
+                filteredVideos.sort((a, b) => a.timestamp - b.timestamp);
+                document.getElementById('sectionTitle').textContent = 'Oldest Videos';
+            } else if (currentFilter === 'popular') {
+                filteredVideos.sort((a, b) => b.views - a.views);
+                document.getElementById('sectionTitle').textContent = 'Most Viewed';
+            } else {
+                document.getElementById('sectionTitle').textContent = 'All Videos';
+            }
+            
+            if (filteredVideos.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">📹</div>
+                        <h3>No videos yet</h3>
+                        <p>Upload your first video to get started!</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            grid.innerHTML = filteredVideos.map((video, index) => `
+                <div class="video-card" onclick="playVideo(${videos.indexOf(video)})">
+                    <div class="video-thumbnail">
+                        ${video.type === 'video' ? 
+                            `<video src="${video.file}" preload="metadata"></video>` :
+                            `<img src="${video.file}" alt="${video.title}">`
+                        }
+                        <div class="play-icon">▶️</div>
+                        ${video.duration ? `<div class="video-duration">${video.duration}</div>` : ''}
+                    </div>
+                    <div class="video-info">
+                        <div class="video-title">${video.title}</div>
+                        <div class="video-meta">
+                            <div class="video-stats">
+                                <span>👁️ ${formatViews(video.views)} views</span>
+                                <span>•</span>
+                                <span>${formatDate(video.timestamp)}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // Filter videos
+        function filterVideos(filter) {
+            currentFilter = filter;
+            
+            // Update active tab
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            renderVideos();
+        }
+        
+        // Search videos
+        function searchVideos() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            if (!query) {
+                renderVideos();
+                return;
+            }
+            
+            const grid = document.getElementById('videoGrid');
+            const results = videos.filter(v => 
+                v.title.toLowerCase().includes(query) || 
+                v.description.toLowerCase().includes(query)
+            );
+            
+            document.getElementById('sectionTitle').textContent = `Search results for "${query}"`;
+            
+            if (results.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">🔍</div>
+                        <h3>No results found</h3>
+                        <p>Try different keywords</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            grid.innerHTML = results.map((video, index) => `
+                <div class="video-card" onclick="playVideo(${videos.indexOf(video)})">
+                    <div class="video-thumbnail">
+                        ${video.type === 'video' ? 
+                            `<video src="${video.file}" preload="metadata"></video>` :
+                            `<img src="${video.file}" alt="${video.title}">`
+                        }
+                        <div class="play-icon">▶️</div>
+                        ${video.duration ? `<div class="video-duration">${video.duration}</div>` : ''}
+                    </div>
+                    <div class="video-info">
+                        <div class="video-title">${video.title}</div>
+                        <div class="video-meta">
+                            <div class="video-stats">
+                                <span>👁️ ${formatViews(video.views)} views</span>
+                                <span>•</span>
+                                <span>${formatDate(video.timestamp)}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function handleSearchKeypress(e) {
+            if (e.key === 'Enter') searchVideos();
+        }
+        
+        // Upload Modal
+        function openUploadModal() {
+            document.getElementById('uploadModal').classList.add('show');
+        }
+        
+        function closeUploadModal() {
+            document.getElementById('uploadModal').classList.remove('show');
+            resetUploadForm();
+        }
+        
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            selectedFile = file;
+            const reader = new FileReader();
+            
+            reader.onload = function(event) {
+                const previewContainer = document.getElementById('previewContainer');
+                const videoPreview = document.getElementById('videoPreview');
+                const imagePreview = document.getElementById('imagePreview');
+                
+                previewContainer.classList.add('show');
+                
+                if (file.type.startsWith('video/')) {
+                    videoPreview.src = event.target.result;
+                    videoPreview.style.display = 'block';
+                    imagePreview.style.display = 'none';
+                } else {
+                    imagePreview.src = event.target.result;
+                    imagePreview.style.display = 'block';
+                    videoPreview.style.display = 'none';
+                }
+                
+                document.getElementById('uploadSubmitBtn').disabled = false;
+            };
+            
+            reader.readAsDataURL(file);
+        }
+        
+        function uploadVideo() {
+            const title = document.getElementById('videoTitle').value.trim();
+            const description = document.getElementById('videoDescription').value.trim();
+            
+            if (!title) {
+                alert('Please enter a title');
+                return;
+            }
+            
+            if (!selectedFile) {
+                alert('Please select a file');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const video = {
+                    id: Date.now(),
+                    title: title,
+                    description: description,
+                    file: e.target.result,
+                    type: selectedFile.type.startsWith('video/') ? 'video' : 'image',
+                    views: 0,
+                    timestamp: Date.now(),
+                    duration: null
+                };
+                
+                videos.unshift(video);
+                saveVideos();
+                renderVideos();
+                closeUploadModal();
+                
+                alert('✅ Upload successful!');
+            };
+            
+            reader.readAsDataURL(selectedFile);
+        }
+        
+        function resetUploadForm() {
+            document.getElementById('videoTitle').value = '';
+            document.getElementById('videoDescription').value = '';
+            document.getElementById('fileInput').value = '';
+            document.getElementById('previewContainer').classList.remove('show');
+            document.getElementById('uploadSubmitBtn').disabled = true;
+            selectedFile = null;
+        }
+        
+        // Play video
+        function playVideo(index) {
+            const video = videos[index];
+            video.views++;
+            saveVideos();
+            
+            const modal = document.getElementById('playerModal');
+            const container = document.getElementById('playerContainer');
+            
+            if (video.type === 'video') {
+                container.innerHTML = `<video src="${video.file}" controls autoplay style="max-width: 100%; max-height: 70vh;"></video>`;
+            } else {
+                container.innerHTML = `<img src="${video.file}" style="max-width: 100%; max-height: 70vh;">`;
+            }
+            
+            document.getElementById('playerTitle').textContent = video.title;
+            document.getElementById('playerViews').textContent = `👁️ ${formatViews(video.views)} views`;
+            document.getElementById('playerDate').textContent = `📅 ${formatDate(video.timestamp)}`;
+            document.getElementById('playerDescription').textContent = video.description || 'No description';
+            
+            modal.classList.add('show');
+            renderVideos();
+        }
+        
+        function closePlayer() {
+            const modal = document.getElementById('playerModal');
+            modal.classList.remove('show');
+            document.getElementById('playerContainer').innerHTML = '';
+        }
+        
+        // Helper functions
+        function formatViews(views) {
+            if (views >= 1000000) return (views / 1000000).toFixed(1) + 'M';
+            if (views >= 1000) return (views / 1000).toFixed(1) + 'K';
+            return views;
+        }
+        
+        function formatDate(timestamp) {
+            const now = Date.now();
+            const diff = now - timestamp;
+            const seconds = Math.floor(diff / 1000);
+            const minutes = Math.floor(seconds / 60);
+            const hours = Math.floor(minutes / 60);
+            const days = Math.floor(hours / 24);
+            const months = Math.floor(days / 30);
+            const years = Math.floor(days / 365);
+            
+            if (seconds < 60) return 'Just now';
+            if (minutes < 60) return minutes + ' minutes ago';
+            if (hours < 24) return hours + ' hours ago';
+            if (days < 30) return days + ' days ago';
+            if (months < 12) return months + ' months ago';
+            return years + ' years ago';
+        }
+        
+        function shuffleArray(array) {
+            const shuffled = [...array];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
+        
+        function loadHome() {
+            currentFilter = 'all';
+            document.getElementById('searchInput').value = '';
+            document.querySelectorAll('.tab').forEach((tab, i) => {
+                tab.classList.toggle('active', i === 0);
+            });
+            renderVideos();
+        }
+        
+        // Initialize
+        loadVideos();
+        
+        // Close modals on background click
+        document.getElementById('uploadModal').addEventListener('click', function(e) {
+            if (e.target === this) closeUploadModal();
+        });
+        
+        document.getElementById('playerModal').addEventListener('click', function(e) {
+            if (e.target === this) closePlayer();
+        });
+    </script>
+</body>
+</html>
